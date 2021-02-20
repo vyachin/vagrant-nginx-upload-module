@@ -23,17 +23,6 @@
           - libgeoip-dev
           - libperl-dev
 
-    - name: NGINX | Directories
-      file:
-        path: "{{ item }}"
-        state: directory
-      with_items:
-        - /var/lib/nginx/body
-        - /var/lib/nginx/fastcgi
-        - /var/lib/nginx/proxy
-        - /var/lib/nginx/scgi
-        - /var/lib/nginx/uwsgi 
-
     - name: NGINX | Get nginx source
       unarchive:
         src: http://nginx.org/download/nginx-1.18.0.tar.gz
@@ -64,6 +53,24 @@
         - reload systemd
         - reload nginx 
 
+    - name: NGINX | Directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - /var/lib/nginx/body
+        - /var/lib/nginx/fastcgi
+        - /var/lib/nginx/proxy
+        - /var/lib/nginx/scgi
+        - /var/lib/nginx/uwsgi 
+  
+    - name: NGINX | Config
+      template:
+        src: nginx.conf
+        dest: /etc/nginx/nginx.conf
+      notify: 
+        - reload nginx 
+    
   handlers:
     - name: reload systemd
       systemd: daemon_reload=yes

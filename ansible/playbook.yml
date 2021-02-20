@@ -71,8 +71,17 @@
       notify: 
         - reload nginx 
     
+    - name: PHP-FPM | Config
+      template:
+        src: www.conf
+        dest: /etc/php/7.4/fpm/pool.d/www.conf
+      notify: 
+        - reload php-fpm
+  
   handlers:
     - name: reload systemd
       systemd: daemon_reload=yes
     - name: reload nginx 
       service: name=nginx state=reloaded 
+    - name: reload php-fpm
+      service: name=php7.4-fpm state=reload

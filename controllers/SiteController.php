@@ -4,7 +4,8 @@ namespace app\controllers;
 
 class SiteController extends \yii\web\Controller
 {
-    public function beforeAction($action) {
+    public function beforeAction($action)
+    {
         if ($action->id == 'upload') {
             $this->enableCsrfValidation = false;
         }
@@ -19,9 +20,7 @@ class SiteController extends \yii\web\Controller
     public function actionUpload()
     {
         echo "<pre>";
-        var_dump([$_POST, $_FILES, $_SERVER]);
-
-        
+        var_dump(['_GET' => $_GET, '_POST' => $_POST, '_FILES' => $_FILES, '_SERVER' => $_SERVER]);
     }
 }
 

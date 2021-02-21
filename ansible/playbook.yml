@@ -63,6 +63,7 @@
       file:
         path: "{{ item }}"
         state: directory
+        owner: vagrant
       with_items:
         - /var/lib/nginx/body
         - /var/lib/nginx/fastcgi
@@ -104,7 +105,9 @@
   handlers:
     - name: reload systemd
       systemd: daemon_reload=yes
+
     - name: restart nginx 
-      service: name=nginx state=restarted 
+      service: name=nginx state=restarted
+
     - name: restart php-fpm
       service: name=php7.4-fpm state=restarted

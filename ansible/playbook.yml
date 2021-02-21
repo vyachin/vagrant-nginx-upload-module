@@ -10,16 +10,83 @@
         state: present
         name:
           - mc
-          - nginx-extras
+          - git
           - php7.4-fpm
+          - php7.4-mbstring
+          - mysql-server
+          - gcc
+          - make
+          - libpcre3-dev
+          - libssl-dev
+          - zlib1g-dev
+          - libxslt-dev
+          - libgd-dev
+          - libgeoip-dev
+          - libperl-dev
+
+    - name: NGINX | Get nginx source
+      unarchive:
+        src: http://nginx.org/download/nginx-1.19.7.tar.gz
+        dest: /usr/src
+        remote_src: yes
+
+    - name: NGINX | Get upload module source
+      unarchive:
+        src: https://github.com/vkholodkov/nginx-upload-module/archive/master.zip
+        dest: /usr/src
+        remote_src: yes
+
+    - name: NGINX | Configure
+      shell: "./configure --with-cc-opt='-g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fPIC -Wdate-time -D_FORTIFY_SOURCE=2' --with-ld-opt='-Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -fPIC' --prefix=/usr/share/nginx --conf-path=/etc/nginx/nginx.conf --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log --lock-path=/var/lock/nginx.lock --pid-path=/run/nginx.pid --modules-path=/usr/lib/nginx/modules --http-client-body-temp-path=/var/lib/nginx/body --http-fastcgi-temp-path=/var/lib/nginx/fastcgi --http-proxy-temp-path=/var/lib/nginx/proxy --http-scgi-temp-path=/var/lib/nginx/scgi --http-uwsgi-temp-path=/var/lib/nginx/uwsgi --with-compat --with-pcre-jit --with-http_ssl_module --with-http_stub_status_module --with-http_realip_module --with-http_auth_request_module --with-http_v2_module --with-http_slice_module --with-threads --with-http_addition_module --with-http_geoip_module=dynamic --with-http_gunzip_module --with-http_gzip_static_module --with-http_image_filter_module=dynamic --with-http_perl_module=dynamic --with-http_random_index_module --with-http_secure_link_module --with-http_sub_module --with-http_xslt_module=dynamic --with-stream=dynamic --with-stream_ssl_module --with-stream_ssl_preread_module --add-module=../nginx-upload-module-master"
+      args:
+        chdir: /usr/src/nginx-1.19.7
+
+    - name: NGINX | Build
+      shell: "make"
+      args:
+        chdir: /usr/src/nginx-1.19.7
+
+    - name: NGINX | Install
+      shell: "make install"
+      args:
+        chdir: /usr/src/nginx-1.19.7
+
+    - name: NGINX | Systemd configure
+      template:
+        src: nginx.service
+        dest: /etc/systemd/system/nginx.service
+      notify:
+        - reload systemd
+        - restart nginx
+
+    - name: NGINX | Directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - /var/lib/nginx/body
+        - /var/lib/nginx/fastcgi
+        - /var/lib/nginx/proxy
+        - /var/lib/nginx/scgi
+        - /var/lib/nginx/uwsgi
+        - /var/lib/nginx/upload/0
+        - /var/lib/nginx/upload/1
+        - /var/lib/nginx/upload/2
+        - /var/lib/nginx/upload/3
+        - /var/lib/nginx/upload/4
+        - /var/lib/nginx/upload/5
+        - /var/lib/nginx/upload/6
+        - /var/lib/nginx/upload/7
+        - /var/lib/nginx/upload/8
+        - /var/lib/nginx/upload/9
 
     - name: NGINX | Config
       template:
         src: nginx.conf
         dest: /etc/nginx/nginx.conf
-      notify: 
-        - restart nginx 
-    
+      notify:
+        - restart nginx
+
     - name: PHP-FPM | Config
       template:
         src: www.conf
@@ -35,6 +102,8 @@
         - restart php-fpm
     
   handlers:
+    - name: reload systemd
+      systemd: daemon_reload=yes
     - name: restart nginx 
       service: name=nginx state=restarted 
     - name: restart php-fpm
